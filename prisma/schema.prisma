@@ -7,59 +7,210 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  ADMIN
+  MANAGER
+  USER
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+}
+
+enum TaskStatus {
+  NOT_YET
+  ON_PROGRESS
+  COMPLETE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum RoutineType {
+  PR
+  VM
+  ADHOC
+}
+
+enum IssueStatus {
+  OPEN
+  IN_PROGRESS
+  SOLVED
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  role      String   @default("user")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String        @id @default(cuid())
+  email          String        @unique
+  name           String
+  role           UserRole      @default(USER)
+  avatarUrl      String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  projects       Project[]
+  tasks          Task[]
+  routineTasks   RoutineTask[]
+  issues         Issue[]
+  notifications  Notification[]
+
+  @@map("users")
 }
 
 model Project {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   name        String
   description String?
-  status      String   @default("active")
-  progress    Int      @default(0)
+  status      ProjectStatus @default(ACTIVE)
   startDate   DateTime?
   endDate     DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  progress    Int           @default(0)
+  createdById String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  createdBy   User          @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  items       Item[]
+  tasks       Task[]
+
+  @@index([createdById])
+  @@map("projects")
+}
+
+model Item {
+  id          String    @id @default(cuid())
+  projectId   String
+  name        String
+  description String?
+  status      TaskStatus @default(NOT_YET)
+  progress    Int       @default(0)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  project    Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  subItems   SubItem[]
+  tasks      Task[]
+
+  @@index([projectId])
+  @@map("items")
+}
+
+model SubItem {
+  id          String    @id @default(cuid())
+  itemId      String
+  name        String
+  description String?
+  pic         String?
+  status      TaskStatus @default(NOT_YET)
+  progress    Int       @default(0)
+  priority    Priority  @default(MEDIUM)
+  dueDate     DateTime?
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  item  Item  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@index([itemId])
+  @@map("sub_items")
 }
 
 model Task {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
+  projectId   String
+  itemId      String?
+  subItemId   String?
+  createdById String
   name        String
   description String?
-  status      String   @default("not_yet")
-  progress    Int      @default(0)
-  priority    String   @default("medium")
-  dueDate     DateTime?
   pic         String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  status      TaskStatus @default(NOT_YET)
+  progress    Int       @default(0)
+  priority    Priority  @default(MEDIUM)
+  dueDate     DateTime?
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  item       Item?     @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  subItem    SubItem?  @relation(fields: [subItemId], references: [id], onDelete: SetNull)
+  createdBy  User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([itemId])
+  @@index([subItemId])
+  @@index([createdById])
+  @@map("tasks")
 }
 
 model RoutineTask {
-  id          String   @id @default(cuid())
-  type        String
-  name        String
-  description String?
-  status      String   @default("open")
-  source      String?
-  dueDate     DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String      @id @default(cuid())
+  createdById    String
+  type           RoutineType
+  name           String
+  description    String?
+  source         String?     // outlook | manual
+  outlookEmailId String?
+  pic            String?
+  status         TaskStatus  @default(NOT_YET)
+  priority       Priority    @default(MEDIUM)
+  dueDate        DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([createdById])
+  @@map("routine_tasks")
 }
 
 model Issue {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
+  createdById String
   name        String
   description String?
   solution    String?
-  status      String   @default("open")
-  severity    String   @default("medium")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  status      IssueStatus @default(OPEN)
+  severity    Severity    @default(MEDIUM)
+  attachments String[]    @default([])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([createdById])
+  @@map("issues")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // deadline, update, alert
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notifications")
 }

@@ -1,22 +1,25 @@
 import { NextResponse } from 'next/server';
+import { ProjectService } from '@/services/project.service';
+
+const DEMO_USER_ID = 'demo-user-001'; // Replace with auth in production
 
 export async function GET() {
-  const projects = [
-    {
-      id: 'p1',
-      name: 'IT Infrastructure Refresh',
-      status: 'On Progress',
-      progress: 72,
-      dueDate: '2026-11-15',
-    },
-    {
-      id: 'p2',
-      name: 'CRM Portal Maintenance',
-      status: 'Not Yet',
-      progress: 32,
-      dueDate: '2026-10-25',
-    },
-  ];
+  try {
+    const projects = await ProjectService.getAllProjects(DEMO_USER_ID);
+    return NextResponse.json(projects);
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: 'Failed to fetch projects' }, { status: 500 });
+  }
+}
 
-  return NextResponse.json(projects);
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const project = await ProjectService.createProject(DEMO_USER_ID, body);
+    return NextResponse.json(project, { status: 201 });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });
+  }
 }

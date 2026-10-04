@@ -3,22 +3,22 @@
 A modern personal project management app for IT workflows, built with Next.js, Tailwind CSS, and PostgreSQL-ready schema.
 
 ## Features
-- Dashboard for project & task overview
-- Project detail with timeline and task hierarchy
-- Routine task management for PR and VM requests
-- Issue and troubleshooting tracking
-- Microsoft Graph integration API starter
-- Vercel-ready structure
+- Dashboard overview with KPI and charts
+- Project portfolio and detail view with timeline
+- Routine task workflow for PR and VM automation
+- Issue & troubleshooting management
+- Microsoft Graph integration starter
+- Deploy-ready structure for Vercel
 
-## Stack
+## Tech Stack
 - Next.js App Router
 - Tailwind CSS
 - Recharts
 - Prisma + PostgreSQL
-- Microsoft Graph API starter
+- Microsoft Graph API
 - Vercel deployment ready
 
-## Setup
+## Local Development
 
 ```bash
 npm install
@@ -26,21 +26,24 @@ cp .env.example .env.local
 npm run dev
 ```
 
-## Environment variables
+## Environment Variables
 
 ```env
 DATABASE_URL="postgresql://..."
 MICROSOFT_TENANT_ID=""
 MICROSOFT_CLIENT_ID=""
 MICROSOFT_CLIENT_SECRET=""
+TELEGRAM_BOT_TOKEN=""
+TELEGRAM_CHAT_ID=""
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
 ## Deployment
 
-1. Push project to GitHub.
-2. Import repo into Vercel.
+1. Push repository to GitHub.
+2. Import to Vercel.
 3. Add environment variables.
-4. Deploy.
+4. Deploy production build.
 
 ## Notes
-This repo is intentionally structured as a clean starter, with modular components and API endpoints to continue building the full production-ready workflow management platform.
+This starter includes the core architecture, dashboard UI, project detail timeline, routine tasks, and issue management modules to support the full workflow you described.

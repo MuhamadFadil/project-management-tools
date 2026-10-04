@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@azure/identity": "^4.7.0",
-    "@microsoft/microsoft-graph-client": "^3.0.7",
+    "@microsoft/microsoft-graph-client": "3.0.7",
     "@prisma/client": "^5.4.2",
     "axios": "^1.6.0",
     "bcryptjs": "^2.4.3",

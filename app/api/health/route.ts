@@ -1,6 +1,25 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
-  // Health check endpoint for Vercel deployment
-  return NextResponse.json({ status: 'ok', timestamp: new Date().toISOString() });
+  try {
+    // Test database connection
+    await prisma.$queryRaw`SELECT 1`;
+
+    return NextResponse.json({
+      status: 'ok',
+      message: 'Service is running',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    return NextResponse.json(
+      {
+        status: 'error',
+        message: 'Service is down',
+        timestamp: new Date().toISOString(),
+      },
+      { status: 500 }
+    );
+  }
 }

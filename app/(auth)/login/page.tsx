@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
@@ -9,10 +9,10 @@ import { AlertCircle } from 'lucide-react';
 export default function LoginPage() {
   const router = useRouter();
   const { login, user, loading } = useAuth();
-  const [email, setEmail] = Error('');
-  const [password, setPassword] = Error('');
-  const [error, setError] = Error('');
-  const [isLoading, setIsLoading] = Error(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (user && !loading) {

@@ -1,11 +1,18 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import axios from 'axios';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-export async function GET() {
+export const maxDuration = 60;
+
+export async function GET(request: NextRequest) {
+  // Verify cron secret for Vercel
+  if (request.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     // Fetch tasks with due date today
     const today = new Date();
@@ -21,6 +28,7 @@ export async function GET() {
         },
         status: { not: 'COMPLETE' },
       },
+      include: { createdBy: { select: { name: true } } },
     });
 
     // Fetch overdue tasks
@@ -29,30 +37,34 @@ export async function GET() {
         dueDate: { lt: today },
         status: { not: 'COMPLETE' },
       },
+      include: { createdBy: { select: { name: true } } },
     });
 
     // Build message
     let message = '<b>📋 Daily Task Reminder</b>\n\n';
 
     if (dueTodayTasks.length > 0) {
-      message += `<b>📌 Due Today (${dueTodayTasks.length}):</b>\n`;
+      message += `<b>📋 Due Today (${dueTodayTasks.length}):</b>\n`;
       dueTodayTasks.forEach((task) => {
-        message += `• ${task.name} (${task.progress}%)\n`;
+        message += `• ${task.name} (${task.progress}%) - ${task.createdBy.name}\n`;
       });
       message += '\n';
+    } else {
+      message += '<b>✅ No tasks due today</b>\n\n';
     }
 
     if (overdueTasks.length > 0) {
       message += `<b>⚠️ Overdue (${overdueTasks.length}):</b>\n`;
       overdueTasks.forEach((task) => {
-        message += `• ${task.name} (${task.progress}%)\n`;
+        message += `• ${task.name} (${task.progress}%) - ${task.createdBy.name}\n`;
       });
-      message += '\n';
+    } else {
+      message += '<b>✅ No overdue tasks</b>\n';
     }
 
-    message += `<i>Generated at ${new Date().toLocaleString()}</i>`;
+    message += `\n<i>Generated at ${new Date().toLocaleString()}</i>`;
 
-    // Send via Telegram
+    // Send via Telegram if configured
     if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
       const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
       await axios.post(url, {
@@ -64,12 +76,12 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      message,
+      message: 'Reminder sent',
       dueTodayCount: dueTodayTasks.length,
       overdueCount: overdueTasks.length,
     });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: 'Cron failed' }, { status: 500 });
+    console.error('Cron job error:', error);
+    return NextResponse.json({ error: 'Cron job failed', details: String(error) }, { status: 500 });
   }
 }

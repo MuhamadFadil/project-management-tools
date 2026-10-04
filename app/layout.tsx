@@ -1,5 +1,6 @@
-import './globals.css';
 import type { Metadata } from 'next';
+import { AuthProvider } from '@/lib/auth-context';
+import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Personal Project Management System',
@@ -9,7 +10,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

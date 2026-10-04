@@ -1,11 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { IssueService } from '@/services/issue.service';
+import { AuthService } from '@/lib/auth';
 
-const DEMO_USER_ID = 'demo-user-001';
-
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const issues = await IssueService.getAllIssues(DEMO_USER_ID);
+    const token = request.headers.get('authorization')?.split(' ')[1];
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const payload = await AuthService.verifyToken(token);
+    const issues = await IssueService.getAllIssues(payload.userId);
+
     return NextResponse.json(issues);
   } catch (error) {
     console.error(error);
@@ -13,10 +19,17 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const token = request.headers.get('authorization')?.split(' ')[1];
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const payload = await AuthService.verifyToken(token);
     const body = await request.json();
-    const issue = await IssueService.createIssue(DEMO_USER_ID, body);
+    const issue = await IssueService.createIssue(payload.userId, body);
+
     return NextResponse.json(issue, { status: 201 });
   } catch (error) {
     console.error(error);
